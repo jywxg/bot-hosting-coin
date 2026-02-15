@@ -1,0 +1,61 @@
+name: 自动获取硬币
+
+on:
+  workflow_dispatch: # 允许在 Actions 页面手动触发此工作流，方便测试
+  schedule:
+    - cron: '18 2 * * *'
+
+jobs:
+  add_time:
+    runs-on: ubuntu-latest # 在最新的 Ubuntu 环境上运行
+
+    # 授予工作流写入仓库内容的权限
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository 
+        uses: actions/checkout@v4
+
+      - name: Set up Python 
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x' 
+
+      - name: Install requirements.txt
+        run: |
+          pip install -r requirements.txt
+
+      - name: Export all secrets to env vars
+        uses: oNaiPs/secrets-to-env-action@v1
+        with:
+          secrets: ${{ toJSON(secrets) }}
+
+      - name: Start noVNC 
+        run: |
+          sudo bash runnovnc.sh
+      - name: Wait for noVNC
+        run: |
+          for i in {1..60}; do
+            if nc -z localhost 8080; then
+              echo "noVNC 已启动"
+              break
+            fi
+            echo "等待中 ($i)..."
+            sleep 1
+          done
+      - name: Run Time Adder Script 
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/.tmp"
+          export TMPDIR="$GITHUB_WORKSPACE/.tmp"
+          echo "Using TMPDIR=$TMPDIR"
+          export DISPLAY=:1
+          echo "Using DISPLAY=$DISPLAY"
+          python main.py
+
+      - name: Upload error artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots
