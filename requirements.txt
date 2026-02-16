@@ -1,2 +1,2 @@
-playwright==1.48.0
-hcaptcha-challenger==1.4.8
+playwright
+hcaptcha-challenger
