@@ -24,7 +24,10 @@ jobs:
 
       - name: Install requirements.txt
         run: |
-          pip install -r requirements.txt
+          pip install uv
+          uv venv
+          source .venv/bin/activate
+          uv pip install -r requirements.txt
           playwright install 
 
       - name: Export all secrets to env vars
@@ -52,6 +55,7 @@ jobs:
           echo "Using TMPDIR=$TMPDIR"
           export DISPLAY=:1
           echo "Using DISPLAY=$DISPLAY"
+          source .venv/bin/activate
           python main.py
 
       - name: Upload error artifacts
